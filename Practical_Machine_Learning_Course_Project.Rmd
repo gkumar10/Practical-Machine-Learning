@@ -5,15 +5,39 @@ Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible t
 Goal is to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants to predict the manner in which they did the exercise. This is the "classe" variable in the training set. We will use any of the other variables to predict with. The report describes how the model was built, how I used cross validation, what I think the expected out of sample error is, and why I made the choices you did. 
 
 #Preprocessing
+Load libraries and training data. Create training set with 60% of dataset. For cross-validation, we will partition testing set into 2 equal subsets.
 ```{r echo=TRUE}
-library(caret)
-```
-
-Load data and create training set with 60% of dataset.
-```{r echo=TRUE}
-df <- read.csv("pml-training.csv", na.strings=c("NA",""))
+suppressWarnings(suppressMessages(library(caret)))
+suppressWarnings(suppressMessages(library(randomForest)))
+df <- read.csv("pml-training.csv", na.strings=c("NA",""), header=TRUE)
 inTrain <- createDataPartition(df$classe, p=0.6, list=FALSE)
 training <- df[inTrain,]
 testing <- df[-inTrain,]
+inSubTest <- createDataPartition(testing$classe, p=0.5, list=FALSE)
+sub_testing1 <- testing[inSubTest,]
+sub_testing2 <- testing[-inSubTest,]
 
 ```
+
+The training set has `r ncol(training)` columns. Not all columns wil be useful since many have NA values. We will remove these columns now.
+```{r echo=TRUE}
+training <- training[, -which(as.numeric(colSums(is.na(training)))>1)]
+```
+
+We will also remove columns that are non-numerics or timestamps.
+```{r echo=TRUE}
+training <- training[,-c(2:6)]
+```
+
+#Model training
+We will use random forest as the learning algorithm to obtain better predictive performance. Using train function to find best predictors for classe variable. 
+```{r echo=TRUE}
+modelFit <- train(classe ~ ., data=training, method="rf")
+```
+To continue model fitting, we will use variable importance evaluation function 'varImp' to assign each predictor with a separate variable importance. All measures of importance is scaled to have a maximum value of 100. 
+
+
+
+
+##References:
+Variable Importance function: http://topepo.github.io/caret/varimp.html
