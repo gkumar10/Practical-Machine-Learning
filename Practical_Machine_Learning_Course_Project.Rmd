@@ -27,17 +27,19 @@ training <- training[, -which(as.numeric(colSums(is.na(training)))>1)]
 We will also remove columns that are non-numerics or timestamps.
 ```{r echo=TRUE}
 training <- training[,-c(2:6)]
+head(training, 10)
 ```
 
 #Model training
 We will use random forest as the learning algorithm to obtain better predictive performance. Using train function to find best predictors for classe variable. 
 ```{r echo=TRUE}
-modelFit <- train(classe ~ ., data=training, method="rf")
+modelFit_rf <- train(classe ~ ., data=training, method="rf") 
+modelFit_glm <- train(classe ~ ., data=training, method="glm")
+
+
 ```
+
 To continue model fitting, we will use variable importance evaluation function 'varImp' to assign each predictor with a separate variable importance. All measures of importance is scaled to have a maximum value of 100. 
-
-
-
 
 ##References:
 Variable Importance function: http://topepo.github.io/caret/varimp.html
