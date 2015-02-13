@@ -2,11 +2,12 @@
 Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement – a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. 
 
 #Goal
-Goal is to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants to predict the manner in which they did the exercise. This is the "classe" variable in the training set. We will use any of the other variables to predict with. The report describes how the model was built, how I used cross validation, what I think the expected out of sample error is, and why I made the choices you did. 
+Goal is to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants to predict the manner in which they did the exercise. This is the "classe" variable in the training set. We will use any of the other variables to predict with. The report describes how the model was built, how I used cross validation, what I think the expected out of sample error is, and why I made the choices I did. 
 
 #Preprocessing
 Load libraries and training data. Create training set with 60% of dataset. For cross-validation, we will partition testing set into 2 equal subsets.
 ```{r echo=TRUE}
+
 suppressWarnings(suppressMessages(library(caret)))
 suppressWarnings(suppressMessages(library(randomForest)))
 df <- read.csv("pml-training.csv", na.strings=c("NA",""), header=TRUE)
@@ -24,20 +25,29 @@ The training set has `r ncol(training)` columns. Not all columns wil be useful s
 training <- training[, -which(as.numeric(colSums(is.na(training)))>1)]
 ```
 
-We will also remove columns that are non-numerics or timestamps.
+We will also remove columns that are non-numerics or timestamps or near zero fractions.
 ```{r echo=TRUE}
 training <- training[,-c(2:6)]
-head(training, 10)
+#training <- training[, -c(grep("^gyros", names(training)))]
 ```
 
-#Model training
-We will use random forest as the learning algorithm to obtain better predictive performance. Using train function to find best predictors for classe variable. 
+#Model selection and training
+We will compare accuracy and results from using 2 models on the same training dataset - generalized linear model (glm) and Random Forest (rf). 
+
 ```{r echo=TRUE}
-modelFit_rf <- train(classe ~ ., data=training, method="rf") 
-modelFit_glm <- train(classe ~ ., data=training, method="glm")
+modelFit_rf <- train(classe ~ ., data=training, method="rf", trControl = trainControl(method="cv")) 
+predict_rf <- predict(modelFit_rf, newdata=testing)
+c1 <- confusionMatrix(predict_rf, testing$classe)
+print(c1)
 
+modelFit_glm <- train(classe ~ ., data=training, method="glm")
+predict_glm <- predict(modelFit_glm, newdata=testing)
+c2 <- confusionMatrix(predict_glm, testing$classe)
+print(c2)
 
 ```
+
+As was expected, random forest yields higher accuracy. We will use rf as the learning algorithm to obtain better predictive performance. Using train function to find best predictors for classe variable. 
 
 To continue model fitting, we will use variable importance evaluation function 'varImp' to assign each predictor with a separate variable importance. All measures of importance is scaled to have a maximum value of 100. 
 
