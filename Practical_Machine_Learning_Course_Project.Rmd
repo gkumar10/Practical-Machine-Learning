@@ -10,6 +10,7 @@ Load libraries and training data. Create training set with 60% of dataset. For c
 
 suppressWarnings(suppressMessages(library(caret)))
 suppressWarnings(suppressMessages(library(randomForest)))
+suppressWarnings(suppressMessages(library(rpart)))
 suppressWarnings(suppressMessages(library(pROC)))
 setwd("~/Coursera/Practical-Machine-Learning")
 
@@ -35,26 +36,44 @@ training <- training[, -c(grep("^gyros", names(training)))]
 training <- training[complete.cases(training), ]
 ```
 
-#Model training
-We will use Random Forest (rf) as the learning algorithm to obtain better predictive performance. Using train function to find best predictors for classe variable.
+#Model selection and training
+We will use 2 two learning algorithms to compare accuracy.
+
+##Recursive Partitioning (rpart)
 ```{r echo=TRUE, cache=TRUE}
-modelFit <- train(classe ~ ., data=training, method="rf", trControl = trainControl(method="cv")) 
-prediction <- predict(modelFit, newdata=testing)
-cfm <- confusionMatrix(prediction, testing$classe)
-cfm
+modelFit_rpart <- train(classe ~ ., data=training, method="rpart") 
+prediction_rpart <- predict(modelFit_rpart, newdata=testing)
+cfm_rpart <- confusionMatrix(prediction_rpart, testing$classe)
+cfm_rpart
 
 ```
-Accuracy of model with rf method is `r cfm$overall[1]` or `r paste(round(cfm$overall[1]*100,2), "%")`.
+Accuracy of model with rpart method is `r cfm_rpart$overall[1]` or `r paste(round(cfm_rpart$overall[1]*100,2), "%")`.
 
-Out of sample error is `r (1 - (sum(prediction == testing$classe)/length(prediction)))`.
+Out of sample error is `r (1 - (sum(prediction_rpart == testing$classe)/length(prediction_rpart)))`.
 
-To continue model fitting, we will use variable importance evaluation function 'varImp' to assign each predictor with a separate variable importance. All measures of importance is scaled to have a maximum value of 100. 
+##Random Forest (rf)
+```{r echo=TRUE, cache=TRUE}
+modelFit_rf <- train(classe ~ ., data=training, method="rf", trControl = trainControl(method="cv")) 
+prediction_rf <- predict(modelFit_rf, newdata=testing)
+cfm_rf <- confusionMatrix(prediction_rf, testing$classe)
+cfm_rf
+
+```
+
+Accuracy of model with rf method is `r cfm_rf$overall[1]` or `r paste(round(cfm_rf$overall[1]*100,2), "%")`.
+
+Out of sample error is `r (1 - (sum(prediction_rf == testing$classe)/length(prediction_rf)))`.
+
+Clearly rf method has better accuracy. We will continue to use Random Forest (rf) as the learning algorithm to obtain better predictive performance and find best predictors for classe variable.
+
+We will use variable importance evaluation function 'varImp' to assign each predictor with a separate variable importance. All measures of importance is scaled to have a maximum value of 100. 
+
 ```{r echo=TRUE}
-varimp <- varImp(modelFit)
-plot(varimp, top=20)
+varimp <- varImp(modelFit_rf)
+plot(varimp, top=25)
 ```
 
-The top 20 most important variables are:
+The top 25 most important variables are:
 `r rownames(varimp$importance)`
 
 Next we will compute area under the ROC curve for each class against the predictor. The ROC curve is essentially a plot of true positive rate against the false positive rate at various threshold settings.
@@ -66,16 +85,16 @@ plot(RocImp)
 #Model testing
 Let us now test the models against the two testing subsets.
 ```{r echo=TRUE}
-prediction1 <- predict(modelFit, newdata=sub_testing1)
+prediction1 <- predict(modelFit_rf, newdata=sub_testing1)
 cfm1 <- confusionMatrix(prediction1, sub_testing1$classe)
 
-prediction2 <- predict(modelFit, newdata=sub_testing2)
+prediction2 <- predict(modelFit_rf, newdata=sub_testing2)
 cfm2 <- confusionMatrix(prediction2, sub_testing2$classe)
-
 
 ```
 
 The accuracy of model against testing subset 1 is: `r cfm1$overall[1]` or `r paste(round(cfm1$overall[1]*100,2), "%")`.
+
 The accuracy of model against testing subset 2 is: `r cfm2$overall[1]` or `r paste(round(cfm2$overall[1]*100,2), "%")`.
 
 ##References:
