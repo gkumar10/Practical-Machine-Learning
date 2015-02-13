@@ -22,13 +22,14 @@ sub_testing2 <- testing[-inSubTest,]
 
 The training set has `r ncol(training)` columns. Not all columns wil be useful since many have NA values. We will remove these columns now.
 ```{r echo=TRUE}
-training <- training[, -which(as.numeric(colSums(is.na(training)))>1)]
+training <- training[, which(as.numeric(colSums(is.na(training)))==0)]
 ```
 
 We will also remove columns that are non-numerics or timestamps or near zero fractions.
 ```{r echo=TRUE}
 training <- training[,-c(2:6)]
-#training <- training[, -c(grep("^gyros", names(training)))]
+training <- training[, -c(grep("^gyros", names(training)))]
+training <- training[complete.cases(training), ]
 ```
 
 #Model selection and training
