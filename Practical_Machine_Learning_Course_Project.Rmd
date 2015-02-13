@@ -40,20 +40,22 @@ We will use Random Forest (rf) as the learning algorithm to obtain better predic
 ```{r echo=TRUE, cache=TRUE}
 modelFit <- train(classe ~ ., data=training, method="rf", trControl = trainControl(method="cv")) 
 prediction <- predict(modelFit, newdata=testing)
-c1 <- confusionMatrix(prediction, testing$classe)
-c1
+cfm <- confusionMatrix(prediction, testing$classe)
+cfm
 
 ```
-Accuracy of model with rf method is `r c1$overall[1]` or `r paste(c1$overall[1]*100, "%")`
-Out of sample error is `r (1 - sum(prediction == testing$classe)/length(prediction)) or paste((1 - sum(prediction == testing$classe)/length(prediction))*100, "%")`
+Accuracy of model with rf method is `r cfm$overall[1]` or `r paste(round(cfm$overall[1]*100,2), "%")`.
+
+Out of sample error is `r (1 - (sum(prediction == testing$classe)/length(prediction)))`.
 
 To continue model fitting, we will use variable importance evaluation function 'varImp' to assign each predictor with a separate variable importance. All measures of importance is scaled to have a maximum value of 100. 
 ```{r echo=TRUE}
 varimp <- varImp(modelFit)
 plot(varimp, top=20)
 ```
+
 The top 20 most important variables are:
-`r varimp`
+`r rownames(varimp$importance)`
 
 Next we will compute area under the ROC curve for each class against the predictor. The ROC curve is essentially a plot of true positive rate against the false positive rate at various threshold settings.
 ```{r echo=TRUE}
@@ -61,6 +63,20 @@ RocImp <- filterVarImp(x = training[, -ncol(training)], y = training$classe)
 plot(RocImp)
 ```
 
+#Model testing
+Let us now test the models against the two testing subsets.
+```{r echo=TRUE}
+prediction1 <- predict(modelFit, newdata=sub_testing1)
+cfm1 <- confusionMatrix(prediction1, sub_testing1$classe)
+
+prediction2 <- predict(modelFit, newdata=sub_testing2)
+cfm2 <- confusionMatrix(prediction2, sub_testing2$classe)
+
+
+```
+
+The accuracy of model against testing subset 1 is: `r cfm1$overall[1]` or `r paste(round(cfm1$overall[1]*100,2), "%")`.
+The accuracy of model against testing subset 2 is: `r cfm2$overall[1]` or `r paste(round(cfm2$overall[1]*100,2), "%")`.
 
 ##References:
 Variable Importance function: http://topepo.github.io/caret/varimp.html
