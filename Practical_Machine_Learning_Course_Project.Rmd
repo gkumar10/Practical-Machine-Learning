@@ -53,7 +53,7 @@ Out of sample error is `r (1 - (sum(prediction_rpart == testing$classe)/length(p
 
 ##Random Forest (rf)
 ```{r echo=TRUE, cache=TRUE}
-modelFit_rf <- train(classe ~ ., data=training, method="rf", trControl = trainControl(method="cv")) 
+modelFit_rf <- train(classe ~ ., data=training, method="rf", trControl = trainControl(method="cv", number=4)) 
 prediction_rf <- predict(modelFit_rf, newdata=testing)
 cfm_rf <- confusionMatrix(prediction_rf, testing$classe)
 cfm_rf
@@ -99,3 +99,12 @@ The accuracy of model against testing subset 2 is: `r cfm2$overall[1]` or `r pas
 
 ##References:
 Variable Importance function: http://topepo.github.io/caret/varimp.html
+
+```{r echo=TRUE}
+testFinal <- read.csv("pml-testing.csv", header=TRUE)
+x <- sort(match(names(training), names(testFinal)))
+testFinal <- testFinal[,x]
+predict(modelFit_rf, testFinal)
+predict(modelFit_rpart, testFinal)
+```
+
