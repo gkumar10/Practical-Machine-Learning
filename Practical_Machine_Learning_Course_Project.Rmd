@@ -37,7 +37,7 @@ training <- training[complete.cases(training), ]
 ```
 
 #Model selection and training
-We will use 2 two learning algorithms to compare accuracy.
+We will use 2 two learning algorithms (rpart and rf) to compare accuracy and out of sample errors.
 
 ##Recursive Partitioning (rpart)
 ```{r echo=TRUE, cache=TRUE}
@@ -49,7 +49,7 @@ cfm_rpart
 ```
 Accuracy of model with rpart method is `r cfm_rpart$overall[1]` or `r paste(round(cfm_rpart$overall[1]*100,2), "%")`.
 
-Out of sample error is `r (1 - (sum(prediction_rpart == testing$classe)/length(prediction_rpart)))`.
+Out of sample error is `r (1 - (sum(prediction_rpart == testing$classe)/length(prediction_rpart)))`. This is the error rate when the method is used on a new data set.
 
 ##Random Forest (rf)
 ```{r echo=TRUE, cache=TRUE}
@@ -64,13 +64,17 @@ Accuracy of model with rf method is `r cfm_rf$overall[1]` or `r paste(round(cfm_
 
 Out of sample error is `r (1 - (sum(prediction_rf == testing$classe)/length(prediction_rf)))`.
 
-Clearly rf method has better accuracy. We will continue to use Random Forest (rf) as the learning algorithm to obtain better predictive performance and find best predictors for classe variable.
+Clearly rf method has better accuracy and way lower out of sample error rate. We will continue to use Random Forest (rf) as the learning algorithm to obtain better predictive performance and find best predictors for classe variable.
 
 We will use variable importance evaluation function 'varImp' to assign each predictor with a separate variable importance. All measures of importance is scaled to have a maximum value of 100. 
 
 ```{r echo=TRUE}
 varimp <- varImp(modelFit_rf)
 plot(varimp, top=25)
+
+varimp <- varImp(modelFit_rpart)
+plot(varimp, top=25)
+
 ```
 
 The top 25 most important variables are:
@@ -80,10 +84,11 @@ Next we will compute area under the ROC curve for each class against the predict
 ```{r echo=TRUE}
 RocImp <- filterVarImp(x = training[, -ncol(training)], y = training$classe)
 plot(RocImp)
+
 ```
 
 #Model testing
-Let us now test the models against the two testing subsets.
+Let us now test the models against the two testing subsets created during pre-processing.
 ```{r echo=TRUE}
 prediction1 <- predict(modelFit_rf, newdata=sub_testing1)
 cfm1 <- confusionMatrix(prediction1, sub_testing1$classe)
