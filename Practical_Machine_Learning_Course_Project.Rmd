@@ -39,7 +39,7 @@ training <- training[complete.cases(training), ]
 #Model selection and training
 We will use 2 two learning algorithms (rpart and rf) to compare accuracy and out of sample errors.
 
-##Recursive Partitioning (rpart)
+###Recursive Partitioning (rpart)
 ```{r echo=TRUE, cache=TRUE}
 modelFit_rpart <- train(classe ~ ., data=training, method="rpart") 
 prediction_rpart <- predict(modelFit_rpart, newdata=testing)
@@ -51,7 +51,7 @@ Accuracy of model with rpart method is `r cfm_rpart$overall[1]` or `r paste(roun
 
 Out of sample error is `r (1 - (sum(prediction_rpart == testing$classe)/length(prediction_rpart)))`. This is the error rate when the method is used on a new data set.
 
-##Random Forest (rf)
+###Random Forest (rf)
 ```{r echo=TRUE, cache=TRUE}
 modelFit_rf <- train(classe ~ ., data=training, method="rf", trControl = trainControl(method="cv", number=4)) 
 prediction_rf <- predict(modelFit_rf, newdata=testing)
@@ -87,7 +87,7 @@ plot(RocImp)
 
 ```
 
-#Model testing
+#Model testing and cross-validation
 Let us now test the models against the two testing subsets created during pre-processing.
 ```{r echo=TRUE}
 prediction1 <- predict(modelFit_rf, newdata=sub_testing1)
@@ -98,9 +98,10 @@ cfm2 <- confusionMatrix(prediction2, sub_testing2$classe)
 
 ```
 
-The accuracy of model against testing subset 1 is: `r cfm1$overall[1]` or `r paste(round(cfm1$overall[1]*100,2), "%")`.
+The accuracy of model against testing subset 1 is: `r cfm1$overall[1]` or `r paste(round(cfm1$overall[1]*100,2), "%")`. Out of sample error is `r (1 - (sum(prediction1 == sub_testing1$classe)/length(prediction1)))`.
 
-The accuracy of model against testing subset 2 is: `r cfm2$overall[1]` or `r paste(round(cfm2$overall[1]*100,2), "%")`.
+
+The accuracy of model against testing subset 2 is: `r cfm2$overall[1]` or `r paste(round(cfm2$overall[1]*100,2), "%")`. Out of sample error is `r (1 - (sum(prediction2 == sub_testing2$classe)/length(prediction2)))`.
 
 ##References:
 Variable Importance function: http://topepo.github.io/caret/varimp.html
@@ -109,7 +110,18 @@ Variable Importance function: http://topepo.github.io/caret/varimp.html
 testFinal <- read.csv("pml-testing.csv", header=TRUE)
 x <- sort(match(names(training), names(testFinal)))
 testFinal <- testFinal[,x]
-predict(modelFit_rf, testFinal)
-predict(modelFit_rpart, testFinal)
+answers <- predict(modelFit_rf, testFinal)
+#answers <- predict(modelFit_rpart, testFinal)
+
+pml_write_files = function(x){
+  n = length(x)
+  for(i in 1:n){
+    filename = paste0("problem_id_",i,".txt")
+    write.table(x[i],file=filename,quote=FALSE,row.names=FALSE,col.names=FALSE)
+  }
+}
+
+pml_write_files(answers)
+
 ```
 
