@@ -41,7 +41,7 @@ We will use 2 two learning algorithms (rpart and rf) to compare accuracy and out
 
 ###Recursive Partitioning (rpart)
 ```{r echo=TRUE, cache=TRUE}
-modelFit_rpart <- train(classe ~ ., data=training, method="rpart") 
+modelFit_rpart <- train(classe ~ ., data=training, method="rpart")
 prediction_rpart <- predict(modelFit_rpart, newdata=testing)
 cfm_rpart <- confusionMatrix(prediction_rpart, testing$classe)
 cfm_rpart
@@ -53,7 +53,8 @@ Out of sample error is `r (1 - (sum(prediction_rpart == testing$classe)/length(p
 
 ###Random Forest (rf)
 ```{r echo=TRUE, cache=TRUE}
-modelFit_rf <- train(classe ~ ., data=training, method="rf", trControl = trainControl(method="cv", number=4)) 
+#modelFit_rf <- train(classe ~ ., data=training, method="rf", trControl = trainControl(method="cv", number=4)) 
+modelFit_rf <- randomForest(classe ~ ., data=training) 
 prediction_rf <- predict(modelFit_rf, newdata=testing)
 cfm_rf <- confusionMatrix(prediction_rf, testing$classe)
 cfm_rf
@@ -104,13 +105,15 @@ The accuracy of model against testing subset 1 is: `r cfm1$overall[1]` or `r pas
 The accuracy of model against testing subset 2 is: `r cfm2$overall[1]` or `r paste(round(cfm2$overall[1]*100,2), "%")`. Out of sample error is `r (1 - (sum(prediction2 == sub_testing2$classe)/length(prediction2)))`.
 
 ##References:
-Variable Importance function: http://topepo.github.io/caret/varimp.html
+1. Variable Importance function: http://topepo.github.io/caret/varimp.html
+2. Models available http://topepo.github.io/caret/bytag.html
 
 ```{r echo=TRUE}
 testFinal <- read.csv("pml-testing.csv", header=TRUE)
 x <- sort(match(names(training), names(testFinal)))
 testFinal <- testFinal[,x]
 answers <- predict(modelFit_rf, testFinal)
+answers
 #answers <- predict(modelFit_rpart, testFinal)
 
 pml_write_files = function(x){
@@ -123,5 +126,7 @@ pml_write_files = function(x){
 
 pml_write_files(answers)
 
+library(brnn)
+modelFit_brnn <- brnn(classe ~ ., data=training, neurons=2)
 ```
 
