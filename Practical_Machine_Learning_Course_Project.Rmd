@@ -7,7 +7,6 @@ Goal is to use data from accelerometers on the belt, forearm, arm, and dumbell o
 #Preprocessing
 Load libraries and training data. Create training set with 60% of dataset. For cross-validation, we will partition testing set into 2 equal subsets.
 ```{r echo=TRUE}
-
 suppressWarnings(suppressMessages(library(caret)))
 suppressWarnings(suppressMessages(library(randomForest)))
 suppressWarnings(suppressMessages(library(rpart)))
@@ -53,8 +52,8 @@ Out of sample error is `r (1 - (sum(prediction_rpart == testing$classe)/length(p
 
 ###Random Forest (rf)
 ```{r echo=TRUE, cache=TRUE}
-#modelFit_rf <- train(classe ~ ., data=training, method="rf", trControl = trainControl(method="cv", number=4)) 
-modelFit_rf <- randomForest(classe ~ ., data=training) 
+#modelFit_rf <- randomForest(classe ~ ., data=training) 
+modelFit_rf <- train(classe ~ ., data=training, method="rf", trControl = trainControl(method="cv", number=4)) 
 prediction_rf <- predict(modelFit_rf, newdata=testing)
 cfm_rf <- confusionMatrix(prediction_rf, testing$classe)
 cfm_rf
@@ -70,12 +69,8 @@ Clearly rf method has better accuracy and way lower out of sample error rate. We
 We will use variable importance evaluation function 'varImp' to assign each predictor with a separate variable importance. All measures of importance is scaled to have a maximum value of 100. 
 
 ```{r echo=TRUE}
-varimp <- varImp(modelFit_rf)
+varimp <- varImp(modelFit_rf, varImp.train=FALSE)
 plot(varimp, top=25)
-
-varimp <- varImp(modelFit_rpart)
-plot(varimp, top=25)
-
 ```
 
 The top 25 most important variables are:
@@ -106,15 +101,18 @@ The accuracy of model against testing subset 2 is: `r cfm2$overall[1]` or `r pas
 
 ##References:
 1. Variable Importance function: http://topepo.github.io/caret/varimp.html
-2. Models available http://topepo.github.io/caret/bytag.html
+2. Models available in caret: http://topepo.github.io/caret/bytag.html
+
+#End of course project writeup
++++++++++++++++++++++++++++++++++++++++++++++
+
+###Below code is for course project submission
 
 ```{r echo=TRUE}
 testFinal <- read.csv("pml-testing.csv", header=TRUE)
 x <- sort(match(names(training), names(testFinal)))
 testFinal <- testFinal[,x]
 answers <- predict(modelFit_rf, testFinal)
-answers
-#answers <- predict(modelFit_rpart, testFinal)
 
 pml_write_files = function(x){
   n = length(x)
@@ -126,7 +124,5 @@ pml_write_files = function(x){
 
 pml_write_files(answers)
 
-library(brnn)
-modelFit_brnn <- brnn(classe ~ ., data=training, neurons=2)
 ```
 
